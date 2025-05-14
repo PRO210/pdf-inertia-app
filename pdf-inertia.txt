@@ -1,0 +1,10 @@
+
+composer create-project laravel/laravel pdf-inertia-app
+myql = pdf-inertia
+composer require inertiajs/inertia-laravel
+php artisan inertia:middleware
+composer require laravel/breeze --dev
+https://github.com/lucascudo/laravel-pt-BR-localization/blob/main/README.md
+npm install --save pdf-lib
+php artisan make:controller PdfEditorController
+
