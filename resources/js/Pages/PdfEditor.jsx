@@ -11,7 +11,8 @@ export default function PdfEditor() {
 
   const [pdfUrl, setPdfUrl] = useState(null)
   const [imagemBase64, setImagemBase64] = useState(null)
-  const [ampliacao, setAmpliacao] = useState(2)
+  // const [ampliacao, setAmpliacao] = useState(2)
+  const [ampliacao, setAmpliacao] = useState({ colunas: 2, linhas: 2 })
   const [partesRecortadas, setPartesRecortadas] = useState([])
   const [orientacao, setOrientacao] = useState('retrato') // 'retrato' ou 'paisagem'
   const [alteracoesPendentes, setAlteracoesPendentes] = useState(false)
@@ -22,7 +23,7 @@ export default function PdfEditor() {
       recortarImagem(imagemBase64).then(setPartesRecortadas)
       setAlteracoesPendentes(true) // Marca que há alterações pendentes
     }
-  }, [ampliacao, orientacao])
+  }, [ampliacao, orientacao, imagemBase64])
 
   // Novo: Pré-processamento da imagem com Canvas
   const recortarImagem = async (base64) => {
@@ -35,11 +36,13 @@ export default function PdfEditor() {
         const ctx = canvas.getContext('2d')
         const partes = []
 
-        const larguraParte = img.width / ampliacao
-        const alturaParte = img.height / ampliacao
+        // const larguraParte = img.width / ampliacao
+        // const alturaParte = img.height / ampliacao
+        const larguraParte = img.width / ampliacao.colunas
+        const alturaParte = img.height / ampliacao.linhas
 
-        for (let y = 0; y < ampliacao; y++) {
-          for (let x = 0; x < ampliacao; x++) {
+        for (let y = 0; y < ampliacao.linhas; y++) {
+          for (let x = 0; x < ampliacao.colunas; x++) {
             canvas.width = larguraParte
             canvas.height = alturaParte
 
@@ -173,7 +176,11 @@ export default function PdfEditor() {
       <Head title="PDF Editor" />
 
       <div className="p-4">
-        <h1 className="md:text-4xl mb-4 text-center font-bold">Montar Banner em PDF</h1>
+        <h1 className="sm:text-xl md:text-4xl mb-4 text-center font-bold">Montar Banner em PDF</h1>
+
+        <div>
+
+        </div>
 
         <div className="flex flex-col md:flex-row gap-2">
 
@@ -197,20 +204,37 @@ export default function PdfEditor() {
               </select>
             </div>
 
-            <div className="w-full">
-              <label className="block mb-1 pro-label text-center text-xl">Ampliação:</label>
-              <select
-                className="px-2 rounded-full pro-input"
-                name="ampliacao"
-                id="ampliacao"
-                value={ampliacao}
-                onChange={(e) => setAmpliacao(parseInt(e.target.value))}
-              >
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}> {n} × {n} </option>
-                ))}
-              </select>
+            <div className="w-full flex flex-col items-center">
+              <label className="block mb-2 pro-label text-xl text-center">Ampliação:</label>
+              <div className="flex gap-2 items-center">
+                <div>
+                  <label className="block text-sm text-center">Colunas</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="pro-input px-2 py-1 rounded-md w-20 text-center"
+                    value={ampliacao.colunas}
+                    onChange={(e) =>
+                      setAmpliacao((prev) => ({ ...prev, colunas: parseInt(e.target.value) || 1 }))
+                    }
+                  />
+                </div>
+                <span className="text-xl">×</span>
+                <div>
+                  <label className="block text-sm text-center">Linhas</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="pro-input px-2 py-1 rounded-md w-20 text-center"
+                    value={ampliacao.linhas}
+                    onChange={(e) =>
+                      setAmpliacao((prev) => ({ ...prev, linhas: parseInt(e.target.value) || 1 }))
+                    }
+                  />
+                </div>
+              </div>
             </div>
+
 
             <div className="">
               <label className="pro-label text-center text-xl">Imagem:</label>
@@ -244,13 +268,21 @@ export default function PdfEditor() {
             </div>
           </div>
 
-          <div id='pdf-preview' className='w-full md:w-4/5 border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto '>            
-            {pdfUrl && (
+          <div id="pdf-preview" className="w-full md:w-4/5 border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100">
+            {pdfUrl ? (
               <iframe
                 src={pdfUrl}
                 className="w-full h-[600px] mx-auto shadow-lg"
                 title="PDF Preview"
               />
+            ) : imagemBase64 ? (
+              <img
+                src={imagemBase64}
+                alt="Pré-visualização da imagem carregada"
+                className="max-h-[400px] object-contain rounded-md shadow-md"
+              />
+            ) : (
+              <p className="text-gray-500 italic">Nenhuma imagem carregada...</p>
             )}
           </div>
 
