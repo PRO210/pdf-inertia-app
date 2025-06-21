@@ -17,6 +17,15 @@ export default function PdfEditor() {
   const [orientacao, setOrientacao] = useState('retrato') // 'retrato' ou 'paisagem'
   const [alteracoesPendentes, setAlteracoesPendentes] = useState(false)
 
+  const resetarConfiguracoes = () => {
+    setPdfUrl(null)
+    setImagemBase64(null)
+    setAmpliacao({ colunas: 2, linhas: 2 })
+    setPartesRecortadas([])
+    setOrientacao('retrato')
+    setAlteracoesPendentes(false)
+  }
+
   useEffect(() => {
     // Só recorta se já houver uma imagem carregada
     if (imagemBase64) {
@@ -168,7 +177,6 @@ export default function PdfEditor() {
 
 
 
-
   return (
 
     <AuthenticatedLayout>
@@ -176,14 +184,11 @@ export default function PdfEditor() {
       <Head title="PDF Editor" />
 
       <div className="p-4">
-        <h1 className="sm:text-xl md:text-4xl mb-4 text-center font-bold">Montar Banner em PDF</h1>
 
-        <div>
-
-        </div>
 
         <div className="flex flex-col md:flex-row gap-2">
 
+          {/* Div esquerda */}
           <div className='flex flex-col items-center justify-center gap-4 w-full md:w-1/5' id='opcoes'>
 
             <div className='w-full text-center md:text-2xl'>
@@ -266,24 +271,38 @@ export default function PdfEditor() {
                 )}
               </>
             </div>
+            <div>
+              <button onClick={resetarConfiguracoes} className="pro-btn-green">
+                Resetar Configurações
+              </button>
+            </div>
           </div>
 
-          <div id="pdf-preview" className="w-full md:w-4/5 border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100">
-            {pdfUrl ? (
-              <iframe
-                src={pdfUrl}
-                className="w-full h-[600px] mx-auto shadow-lg"
-                title="PDF Preview"
-              />
-            ) : imagemBase64 ? (
-              <img
-                src={imagemBase64}
-                alt="Pré-visualização da imagem carregada"
-                className="max-h-[400px] object-contain rounded-md shadow-md"
-              />
-            ) : (
-              <p className="text-gray-500 italic">Nenhuma imagem carregada...</p>
-            )}
+          <div className='md:w-4/5 my-4' id='preview'>
+            <div className="mx-auto  md:max-w-80 mb-4 p-4 rounded-2xl bg-gradient-to-r from-primary-light via-primary to-primary-dark transition-all duration-500 ease-in-out hover:scale-105">
+              <h1 className="sm:text-xl md:text-2xl text-center font-bold text-white">
+                Montar Banner em PDF
+              </h1>
+            </div>
+            <div id="pdf-preview" className="w-full border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100">
+              {pdfUrl ? (
+                <iframe
+                  src={pdfUrl}
+                  className="w-full h-[600px] mx-auto shadow-lg"
+                  title="PDF Preview"
+                />
+              ) : imagemBase64 ? (
+                <img
+                  src={imagemBase64}
+                  alt="Pré-visualização da imagem carregada"
+                  className="max-h-[600px] object-contain rounded-md shadow-md"
+                />
+              ) : (
+                <div className='flex flex-col items-center justify-center min-h-[600px]'>
+                  <p className="text-gray-500 italic">Nenhuma imagem carregada...</p>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
