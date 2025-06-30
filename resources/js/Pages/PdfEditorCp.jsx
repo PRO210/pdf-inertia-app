@@ -3,6 +3,7 @@ import { PDFDocument, rgb } from 'pdf-lib'
 import { usePage } from '@inertiajs/react'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
 import { Head } from '@inertiajs/react';
+import ReactPDF from '@react-pdf/renderer';
 
 export default function PdfEditor() {
 
@@ -171,18 +172,21 @@ export default function PdfEditor() {
 
     }
 
-    pdfDoc.catalog.ViewerPreferences({
-      FitWindow: true,
-      CenterWindow: true,
-      DisplayDocTitle: true,
-      HideToolbar: true,
-      HideMenubar: true,
-      HideWindowUI: false
-    });
+    // pdfDoc.catalog.ViewerPreferences({
+    //   FitWindow: true,
+    //   CenterWindow: true,
+    //   DisplayDocTitle: true,
+    //   HideToolbar: true,
+    //   HideMenubar: true,
+    //   HideWindowUI: false
+    // });
 
     const pdfBytes = await pdfDoc.save()
     const blob = new Blob([pdfBytes], { type: 'application/pdf' })
     setPdfUrl(URL.createObjectURL(blob))
+
+    console.log(pdfUrl);
+    
   }
 
 

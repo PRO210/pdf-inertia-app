@@ -2,20 +2,27 @@ import { useEffect, useRef, useState } from 'react'
 import { PDFDocument, rgb } from 'pdf-lib'
 import { usePage } from '@inertiajs/react'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
-import { Head } from '@inertiajs/react';
+import { Head } from '@inertiajs/react'
+
+import * as pdfjsLib from 'pdfjs-dist'
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.min.js'
 
 export default function PdfEditor() {
-
   const { props } = usePage()
   const user = props.auth.user
 
   const [pdfUrl, setPdfUrl] = useState(null)
   const [imagemBase64, setImagemBase64] = useState(null)
-  // const [ampliacao, setAmpliacao] = useState(2)
   const [ampliacao, setAmpliacao] = useState({ colunas: 2, linhas: 2 })
   const [partesRecortadas, setPartesRecortadas] = useState([])
-  const [orientacao, setOrientacao] = useState('retrato') // 'retrato' ou 'paisagem'
+  const [orientacao, setOrientacao] = useState('retrato')
   const [alteracoesPendentes, setAlteracoesPendentes] = useState(false)
+  const [erroPdf, setErroPdf] = useState(null)
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [totalPaginas, setTotalPaginas] = useState(0)
+  const [zoom, setZoom] = useState(1)
+
+  const pdfContainerRef = useRef(null)
 
   const resetarConfiguracoes = () => {
     setPdfUrl(null)
@@ -24,37 +31,33 @@ export default function PdfEditor() {
     setPartesRecortadas([])
     setOrientacao('retrato')
     setAlteracoesPendentes(false)
+    setErroPdf(null)
+    setPaginaAtual(1)
+    setTotalPaginas(0)
+    setZoom(1)
   }
 
   useEffect(() => {
-    // Só recorta se já houver uma imagem carregada
     if (imagemBase64) {
       recortarImagem(imagemBase64).then(setPartesRecortadas)
-      setAlteracoesPendentes(true) // Marca que há alterações pendentes
+      setAlteracoesPendentes(true)
     }
   }, [ampliacao, orientacao, imagemBase64])
 
-  // Novo: Pré-processamento da imagem com Canvas
   const recortarImagem = async (base64) => {
     return new Promise((resolve) => {
-      const img = new Image()
+      const img = new window.Image()
       img.src = base64
-
       img.onload = () => {
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
         const partes = []
-
-        // const larguraParte = img.width / ampliacao
-        // const alturaParte = img.height / ampliacao
         const larguraParte = img.width / ampliacao.colunas
         const alturaParte = img.height / ampliacao.linhas
-
         for (let y = 0; y < ampliacao.linhas; y++) {
           for (let x = 0; x < ampliacao.colunas; x++) {
             canvas.width = larguraParte
             canvas.height = alturaParte
-
             ctx.drawImage(
               img,
               x * larguraParte,
@@ -66,7 +69,6 @@ export default function PdfEditor() {
               larguraParte,
               alturaParte
             )
-
             partes.push(canvas.toDataURL())
           }
         }
@@ -78,68 +80,99 @@ export default function PdfEditor() {
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-
     const reader = new FileReader()
     reader.onload = async (e) => {
       const base64 = e.target.result
-
       const partes = await recortarImagem(base64)
       setPartesRecortadas(partes)
-
       setImagemBase64(base64)
     }
     reader.readAsDataURL(file)
   }
 
+  useEffect(() => {
+    if (!pdfUrl) return
+    setErroPdf(null)
+
+    const renderPDF = async () => {
+      try {
+        const loadingTask = pdfjsLib.getDocument(pdfUrl)
+        const pdf = await loadingTask.promise
+        setTotalPaginas(pdf.numPages)
+
+        const container = pdfContainerRef.current
+        if (!container) return
+        container.innerHTML = ''
+
+        const page = await pdf.getPage(paginaAtual)
+        const unscaledViewport = page.getViewport({ scale: 1 })
+
+        // Usamos o zoom para o scale
+        const scale = zoom
+        const viewport = page.getViewport({ scale })
+
+        const canvas = document.createElement('canvas')
+        canvas.classList.add('mb-4', 'shadow-md', 'border', 'rounded')
+
+        // Define tamanho canvas conforme viewport
+        canvas.width = viewport.width
+        canvas.height = viewport.height
+
+        // CSS para limitar altura e manter proporção
+        canvas.style.maxHeight = '600px'
+        canvas.style.width = 'auto'
+        canvas.style.height = 'auto'
+
+        const context = canvas.getContext('2d')
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport,
+        }
+        await page.render(renderContext).promise
+        container.appendChild(canvas)
+      } catch (error) {
+        setErroPdf('Erro ao renderizar o PDF. Verifique se o arquivo pdf.worker.min.js está disponível.')
+        console.error("Erro ao renderizar PDF com PDF.js:", error)
+      }
+    }
+    renderPDF()
+  }, [pdfUrl, paginaAtual, zoom])
 
   const gerarPDF = async () => {
-
     const pdfDoc = await PDFDocument.create()
-
-    const a4Retrato = [595.28, 841.89]   // A4: 210 × 297 mm
-    const a4Paisagem = [841.89, 595.28]  // A4: 297 × 210 mm
+    const a4Retrato = [595.28, 841.89]
+    const a4Paisagem = [841.89, 595.28]
     const [pageWidth, pageHeight] = orientacao === 'retrato' ? a4Retrato : a4Paisagem
-
-
-    const margemBorda = 14.17       // 5mm
-    const margemImagem = 14.17 * 2  // 10mm (5mm da borda + 5mm após a linha de corte)
+    const margemBorda = 14.17
+    const margemImagem = 14.17 * 2
 
     for (const parte of partesRecortadas) {
       const page = pdfDoc.addPage([pageWidth, pageHeight])
       const imageBytes = await fetch(parte).then(res => res.arrayBuffer())
-
       const image = parte.includes('png')
         ? await pdfDoc.embedPng(imageBytes)
         : await pdfDoc.embedJpg(imageBytes)
 
-      // Ajuste de escala para deixar 5mm de margem em todos os lados
       const escala = Math.min(
         (pageWidth - margemImagem * 2) / image.width,
         (pageHeight - margemImagem * 2) / image.height
       )
-
       const largura = image.width * escala
       const altura = image.height * escala
-
       const x = margemImagem
       const y = pageHeight - altura - margemImagem
 
-      page.drawImage(image, {
-        x,
-        y,
-        width: largura,
-        height: altura,
-      })
+      page.drawImage(image, { x, y, width: largura, height: altura })
 
-      // Número da página no canto inferior direito
+      // Número da página
       page.drawText(`${pdfDoc.getPageCount()}`, {
         x: pageWidth - margemImagem - 10,
-        y: margemImagem - 2,
+        y: margemBorda - 2,
         size: 8,
         color: rgb(0, 0, 0),
       })
 
-      // Função auxiliar para desenhar linhas pontilhadas
+      // Pontilhado nas bordas
       const desenharLinhaPontilhada = (x1, y1, x2, y2, segmento = 5, espaco = 3) => {
         const dx = x2 - x1
         const dy = y2 - y1
@@ -147,13 +180,11 @@ export default function PdfEditor() {
         const passos = Math.floor(comprimento / (segmento + espaco))
         const incX = dx / comprimento
         const incY = dy / comprimento
-
         for (let i = 0; i < passos; i++) {
           const inicioX = x1 + (segmento + espaco) * i * incX
           const inicioY = y1 + (segmento + espaco) * i * incY
           const fimX = inicioX + segmento * incX
           const fimY = inicioY + segmento * incY
-
           page.drawLine({
             start: { x: inicioX, y: inicioY },
             end: { x: fimX, y: fimY },
@@ -162,46 +193,35 @@ export default function PdfEditor() {
           })
         }
       }
-
-      // Desenha as 4 linhas pontilhadas (topo, inferior, esquerda, direita) a 5mm da borda
-      desenharLinhaPontilhada(margemBorda, margemBorda, pageWidth - margemBorda, margemBorda) // Inferior
-      desenharLinhaPontilhada(margemBorda, pageHeight - margemBorda, pageWidth - margemBorda, pageHeight - margemBorda) // Superior
-      desenharLinhaPontilhada(margemBorda, margemBorda, margemBorda, pageHeight - margemBorda) // Esquerda
-      desenharLinhaPontilhada(pageWidth - margemBorda, margemBorda, pageWidth - margemBorda, pageHeight - margemBorda) // Direita
-
+      desenharLinhaPontilhada(margemBorda, margemBorda, pageWidth - margemBorda, margemBorda)
+      desenharLinhaPontilhada(margemBorda, pageHeight - margemBorda, pageWidth - margemBorda, pageHeight - margemBorda)
+      desenharLinhaPontilhada(margemBorda, margemBorda, margemBorda, pageHeight - margemBorda)
+      desenharLinhaPontilhada(pageWidth - margemBorda, margemBorda, pageWidth - margemBorda, pageHeight - margemBorda)
     }
-
-    pdfDoc.catalog.ViewerPreferences({
-      FitWindow: true,
-      CenterWindow: true,
-      DisplayDocTitle: true,
-      HideToolbar: true,
-      HideMenubar: true,
-      HideWindowUI: false
-    });
 
     const pdfBytes = await pdfDoc.save()
     const blob = new Blob([pdfBytes], { type: 'application/pdf' })
     setPdfUrl(URL.createObjectURL(blob))
+    setPaginaAtual(1)
   }
 
-
+  const downloadPDF = () => {
+    if (!pdfUrl) return
+    const a = document.createElement('a')
+    a.href = pdfUrl
+    a.download = 'documento.pdf'
+    a.click()
+  }
 
   return (
-
     <AuthenticatedLayout>
-
       <Head title="PDF Editor" />
-
       <div className="p-4">
-
-
         <div className="flex flex-col md:flex-row gap-2">
 
-          {/* Div esquerda */}
-          <div className='flex flex-col items-center justify-center gap-4 w-full md:w-1/5' id='opcoes'>
-
-            <div className='w-full text-center md:text-2xl'>
+          {/* Opções */}
+          <div className="flex flex-col items-center justify-center gap-4 w-full md:w-1/5" id="opcoes">
+            <div className="w-full text-center md:text-2xl">
               <h1>Opções</h1>
             </div>
 
@@ -217,7 +237,8 @@ export default function PdfEditor() {
                 <option value="retrato">Retrato</option>
                 <option value="paisagem">Paisagem</option>
               </select>
-            </div><br />
+            </div>
+            <br />
 
             <div className="w-full flex flex-col items-center">
               <label className="block mb-2 pro-label text-xl text-center">Ampliação:</label>
@@ -248,27 +269,12 @@ export default function PdfEditor() {
                   />
                 </div>
               </div>
-            </div><br />
+            </div>
+            <br />
 
-
-            {/* <div className="">
-              <label className="pro-label text-center text-xl">Imagem:</label>
-              <input
-                type="file"
-                accept="image/png, image/jpeg"
-                onChange={handleFileChange}
-                className="pro-btn-blue
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100 cursor-pointer"
-              />
-            </div> */}
-
-            <div>
-              <>
-                {user && (
+            <div className="flex flex-col gap-2 w-full">
+              {user && (
+                <>
                   <button
                     onClick={() => {
                       gerarPDF()
@@ -278,9 +284,33 @@ export default function PdfEditor() {
                   >
                     {alteracoesPendentes ? "Aplicar alterações" : "Gerar PDF"}
                   </button>
-                )}
-              </>
-            </div><br />
+
+                  <button onClick={downloadPDF} className="pro-btn-green mt-2" disabled={!pdfUrl}>
+                    Baixar PDF
+                  </button>
+
+                  <div className="flex justify-center gap-2 mt-2">
+                    <button
+                      onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
+                      disabled={zoom <= 0.25}
+                      className="pro-btn-blue px-3 py-1 rounded"
+                    >
+                      -
+                    </button>
+                    <span className="flex items-center px-2">{(zoom * 100).toFixed(0)}%</span>
+                    <button
+                      onClick={() => setZoom((z) => Math.min(z + 0.1, 3))}
+                      disabled={zoom >= 3}
+                      className="pro-btn-blue px-3 py-1 rounded"
+                    >
+                      +
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <br />
 
             <div>
               <button onClick={resetarConfiguracoes} className="pro-btn-green">
@@ -289,20 +319,23 @@ export default function PdfEditor() {
             </div>
           </div>
 
-          {/* Segunda Div */}
-          <div className='md:w-4/5 my-4' id='preview'>
-            <div className="mx-auto  md:max-w-80 mb-4 p-4 rounded-2xl bg-gradient-to-r from-primary-light via-primary to-primary-dark transition-all duration-500 ease-in-out hover:scale-105">
+          {/* Preview */}
+          <div className="md:w-4/5 my-4" id="preview">
+            <div className="mx-auto md:max-w-80 mb-4 p-4 rounded-2xl bg-gradient-to-r from-primary-light via-primary to-primary-dark transition-all duration-500 ease-in-out hover:scale-105">
               <h1 className="sm:text-xl md:text-2xl text-center font-bold text-white">
                 Montar Banner em PDF
               </h1>
             </div>
 
-            <div id="pdf-preview" className="w-full border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100">
+            <div
+              id="pdf-preview"
+              className="w-full border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100"
+              style={{ minHeight: '600px' }}
+            >
               {pdfUrl ? (
-                <iframe
-                  src={pdfUrl}
-                  className="w-full h-[600px] mx-auto shadow-lg"
-                  title="PDF Preview"
+                <div
+                  ref={pdfContainerRef}
+                  className="w-full max-w-full overflow-auto flex flex-col items-center"
                 />
               ) : imagemBase64 ? (
                 <img
@@ -311,8 +344,8 @@ export default function PdfEditor() {
                   className="max-h-[600px] object-contain rounded-md shadow-md"
                 />
               ) : (
-                <div className='flex flex-col items-center justify-center min-h-[600px]'>
-                  <div className="">
+                <div className="flex flex-col items-center justify-center min-h-[600px]">
+                  <div>
                     <label className="pro-label text-center text-xl">Nenhuma Imagem Selecionada:</label>
                     <input
                       type="file"
@@ -328,8 +361,33 @@ export default function PdfEditor() {
                   </div>
                 </div>
               )}
+              {erroPdf && (
+                <div className="text-red-600 mt-2 text-center">{erroPdf}</div>
+              )}
             </div>
 
+            {/* Paginação */}
+            {pdfUrl && totalPaginas > 1 && (
+              <div className="mt-4 flex justify-center items-center gap-4">
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
+                  disabled={paginaAtual === 1}
+                  className="pro-btn-blue"
+                >
+                  Página anterior
+                </button>
+                <span className="text-lg">
+                  {paginaAtual} / {totalPaginas}
+                </span>
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
+                  disabled={paginaAtual === totalPaginas}
+                  className="pro-btn-blue"
+                >
+                  Próxima página
+                </button>
+              </div>
+            )}
           </div>
 
         </div>
