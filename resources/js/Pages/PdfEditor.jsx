@@ -139,6 +139,7 @@ export default function PdfEditor() {
   }, [pdfUrl, paginaAtual, zoom])
 
   const gerarPDF = async () => {
+
     const pdfDoc = await PDFDocument.create()
     const a4Retrato = [595.28, 841.89]
     const a4Paisagem = [841.89, 595.28]
@@ -323,7 +324,7 @@ export default function PdfEditor() {
           <div className="md:w-4/5 my-4" id="preview">
             <div className="mx-auto md:max-w-80 mb-4 p-4 rounded-2xl bg-gradient-to-r from-primary-light via-primary to-primary-dark transition-all duration-500 ease-in-out hover:scale-105">
               <h1 className="sm:text-xl md:text-2xl text-center font-bold text-white">
-                Montar Banner em PDF
+                Preview do Banner em PDF
               </h1>
             </div>
 
@@ -334,6 +335,7 @@ export default function PdfEditor() {
             >
               {pdfUrl ? (
                 <div
+                  key={pdfUrl} // força remontagem ao trocar
                   ref={pdfContainerRef}
                   className="w-full max-w-full overflow-auto flex flex-col items-center"
                 />
