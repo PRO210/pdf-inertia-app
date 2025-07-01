@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\PdfEditorController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -29,5 +31,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/pdf-editor', [PdfEditorController::class, 'index'])->name('pdf.editor');
     Route::post('/dashboard/pdf-editor', [PdfEditorController::class, 'store'])->name('pdf.editor.store');
 });
+
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->middleware('guest')->name('password.request');
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('guest')->name('password.email');
+
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.update');
+
 
 require __DIR__ . '/auth.php';
