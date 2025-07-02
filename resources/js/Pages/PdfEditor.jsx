@@ -144,8 +144,11 @@ export default function PdfEditor() {
     const a4Retrato = [595.28, 841.89]
     const a4Paisagem = [841.89, 595.28]
     const [pageWidth, pageHeight] = orientacao === 'retrato' ? a4Retrato : a4Paisagem
-    const margemBorda = 14.17
-    const margemImagem = 14.17 * 2
+
+    const CM_TO_POINTS = 28.3465
+    const margem = 1 * CM_TO_POINTS // 1 cm em pontos
+
+    let pageIndex = 0; // Adiciona um índice para a página atual, começando de 0
 
     for (const parte of partesRecortadas) {
       const page = pdfDoc.addPage([pageWidth, pageHeight])
@@ -155,23 +158,48 @@ export default function PdfEditor() {
         : await pdfDoc.embedJpg(imageBytes)
 
       const escala = Math.min(
-        (pageWidth - margemImagem * 2) / image.width,
-        (pageHeight - margemImagem * 2) / image.height
+        (pageWidth - margem * 2) / image.width,
+        (pageHeight - margem * 2) / image.height
       )
+
       const largura = image.width * escala
       const altura = image.height * escala
-      const x = margemImagem
-      const y = pageHeight - altura - margemImagem
+
+      // const x = margem
+      // const y = pageHeight - altura - margem
+
+      const x = margem; // A imagem sempre começa da margem esquerda
+
+      // === INÍCIO DA NOVA LÓGICA DE POSICIONAMENTO Y ===
+
+      // Determina a "linha" atual da imagem original que esta parte representa (0-based)
+      const linhaDaImagemOriginal = Math.floor(pageIndex / ampliacao.colunas);
+
+      let y;
+      // Se for a primeira linha da imagem original (linha 0)
+      if (linhaDaImagemOriginal === 0) {
+        y = margem; // Alinha a parte inferior da imagem com a margem inferior da página
+      }
+      // Se for a última linha da imagem original
+      else if (linhaDaImagemOriginal === ampliacao.linhas - 1) {
+        y = pageHeight - altura - margem; // Alinha a parte superior da imagem com a margem superior da página
+      }
+      // Se for qualquer linha intermediária (não a primeira nem a última)
+      else {
+        y = pageHeight - altura - margem; // Alinha a parte superior da imagem com a margem superior da página
+      }
 
       page.drawImage(image, { x, y, width: largura, height: altura })
 
       // Número da página
       page.drawText(`${pdfDoc.getPageCount()}`, {
-        x: pageWidth - margemImagem - 10,
-        y: margemBorda - 2,
+        x: pageWidth - margem,
+        y: margem - 10,
         size: 8,
         color: rgb(0, 0, 0),
       })
+
+      pageIndex++; // Não esqueça de incrementar o índice da página
 
       // Pontilhado nas bordas
       const desenharLinhaPontilhada = (x1, y1, x2, y2, segmento = 5, espaco = 3) => {
@@ -194,10 +222,10 @@ export default function PdfEditor() {
           })
         }
       }
-      desenharLinhaPontilhada(margemBorda, margemBorda, pageWidth - margemBorda, margemBorda)
-      desenharLinhaPontilhada(margemBorda, pageHeight - margemBorda, pageWidth - margemBorda, pageHeight - margemBorda)
-      desenharLinhaPontilhada(margemBorda, margemBorda, margemBorda, pageHeight - margemBorda)
-      desenharLinhaPontilhada(pageWidth - margemBorda, margemBorda, pageWidth - margemBorda, pageHeight - margemBorda)
+      desenharLinhaPontilhada(margem, margem, pageWidth - margem, margem)
+      desenharLinhaPontilhada(margem, pageHeight - margem, pageWidth - margem, pageHeight - margem)
+      desenharLinhaPontilhada(margem, margem, margem, pageHeight - margem)
+      desenharLinhaPontilhada(pageWidth - margem, margem, pageWidth - margem, pageHeight - margem)
     }
 
     const pdfBytes = await pdfDoc.save()
