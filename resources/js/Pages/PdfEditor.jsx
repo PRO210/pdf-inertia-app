@@ -244,7 +244,7 @@ export default function PdfEditor() {
 
   return (
     <AuthenticatedLayout>
-      <Head title="PDF Editor" />
+      <Head title="Editor" />
       <div className="p-4">
         <div className="flex flex-col md:flex-row gap-2">
 
@@ -341,8 +341,8 @@ export default function PdfEditor() {
 
             <br />
 
-            <div>
-              <button onClick={resetarConfiguracoes} className="pro-btn-green">
+            <div className='w-full'>
+              <button onClick={resetarConfiguracoes} className="pro-btn-slate">
                 Resetar Configurações
               </button>
             </div>
@@ -351,7 +351,7 @@ export default function PdfEditor() {
           {/* Preview */}
           <div className="md:w-4/5 my-4" id="preview">
             <div className="mx-auto md:max-w-80 mb-4 p-4 rounded-2xl bg-gradient-to-r from-primary-light via-primary to-primary-dark transition-all duration-500 ease-in-out hover:scale-105">
-              <h1 className="sm:text-xl md:text-2xl text-center font-bold text-white">
+              <h1 className="sm:text-xl md:text-2xl text-center font-bold text-white whitespace-nowrap">
                 Preview do Banner em PDF
               </h1>
             </div>
@@ -402,17 +402,17 @@ export default function PdfEditor() {
                 <button
                   onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
                   disabled={paginaAtual === 1}
-                  className="pro-btn-blue"
+                  className={`pro-btn-blue ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
                 >
                   Página anterior
                 </button>
-                <span className="text-lg">
+                <span className="text-lg whitespace-nowrap">
                   {paginaAtual} / {totalPaginas}
                 </span>
                 <button
                   onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
                   disabled={paginaAtual === totalPaginas}
-                  className="pro-btn-blue"
+                  className={`pro-btn-blue ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
                 >
                   Próxima página
                 </button>
