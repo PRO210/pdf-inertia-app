@@ -350,10 +350,35 @@ export default function PdfEditor() {
 
           {/* Preview */}
           <div className="md:w-4/5 my-4" id="preview">
-            <div className="mx-auto md:max-w-80 mb-4 p-4 rounded-2xl bg-gradient-to-r from-primary-light via-primary to-primary-dark transition-all duration-500 ease-in-out hover:scale-105">
-              <h1 className="sm:text-xl md:text-2xl text-center font-bold text-white whitespace-nowrap">
-                Preview do Banner em PDF
+            <div className="mx-auto mb-4 p-4 rounded-2xl ">
+              <h1 className="sm:text-xl md:text-2xl text-center font-bold whitespace-nowrap">
+                Preview do{" "}
+                <span>
+                  {pdfUrl ? "Banner em PDF" : "da Imagem"}
+                </span>
               </h1>
+              {/* Paginação */}
+              {pdfUrl && totalPaginas > 1 && (
+                <div className="mt-4 flex justify-center items-center gap-4">
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
+                    disabled={paginaAtual === 1}
+                    className={`pro-btn-blue ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                  >
+                    Página anterior
+                  </button>
+                  <span className="text-lg whitespace-nowrap">
+                    {paginaAtual} / {totalPaginas}
+                  </span>
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
+                    disabled={paginaAtual === totalPaginas}
+                    className={`pro-btn-blue ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                  >
+                    Próxima página
+                  </button>
+                </div>
+              )}
             </div>
 
             <div
@@ -371,10 +396,10 @@ export default function PdfEditor() {
                 <img
                   src={imagemBase64}
                   alt="Pré-visualização da imagem carregada"
-                  className="max-h-[600px] object-contain rounded-md shadow-md"
+                  className="max-h-[500px] object-contain rounded-md shadow-md"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center min-h-[600px]">
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
                   <div>
                     <label className="pro-label text-center text-xl">Nenhuma Imagem Selecionada:</label>
                     <input
@@ -395,30 +420,8 @@ export default function PdfEditor() {
                 <div className="text-red-600 mt-2 text-center">{erroPdf}</div>
               )}
             </div>
-
-            {/* Paginação */}
-            {pdfUrl && totalPaginas > 1 && (
-              <div className="mt-4 flex justify-center items-center gap-4">
-                <button
-                  onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
-                  disabled={paginaAtual === 1}
-                  className={`pro-btn-blue ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
-                >
-                  Página anterior
-                </button>
-                <span className="text-lg whitespace-nowrap">
-                  {paginaAtual} / {totalPaginas}
-                </span>
-                <button
-                  onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
-                  disabled={paginaAtual === totalPaginas}
-                  className={`pro-btn-blue ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
-                >
-                  Próxima página
-                </button>
-              </div>
-            )}
           </div>
+
 
         </div>
       </div>
