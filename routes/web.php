@@ -38,5 +38,7 @@ Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->
 Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->middleware('guest')->name('password.reset');
 Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('guest')->name('password.update');
 
+Route::post('/cortar-imagem', [PdfEditorController::class, 'cortarImagem']);
+
 
 require __DIR__ . '/auth.php';

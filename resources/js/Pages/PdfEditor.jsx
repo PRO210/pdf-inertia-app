@@ -3,6 +3,7 @@ import { PDFDocument, rgb } from 'pdf-lib'
 import { usePage } from '@inertiajs/react'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
 import { Head } from '@inertiajs/react'
+import { router } from '@inertiajs/react'
 
 import * as pdfjsLib from 'pdfjs-dist'
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.min.js'
@@ -38,12 +39,6 @@ export default function PdfEditor() {
     setZoom(1)
   }
 
-  // useEffect(() => {
-  //   if (imagemBase64) {
-  //     recortarImagem(imagemBase64).then(setPartesRecortadas)
-  //     setAlteracoesPendentes(true)
-  //   }
-  // }, [ampliacao, orientacao, imagemBase64])
 
   // const recortarImagem = async (base64) => {
   //   return new Promise((resolve) => {
@@ -54,11 +49,20 @@ export default function PdfEditor() {
   //       const ctx = canvas.getContext('2d')
   //       const partes = []
   //       const larguraParte = img.width / ampliacao.colunas
-  //       const alturaParte = img.height / ampliacao.linhas
+  //       const alturaParte = img.height / ampliacao.linhas  
+
+  //       // Defina o tamanho da folha conforme a orientação
+  //       const isRetrato = orientacao === 'retrato'
+  //       const larguraFolha = isRetrato ? 2480 : 3508
+  //       const alturaFolha = isRetrato ? 3508 : 2480
+
   //       for (let y = 0; y < ampliacao.linhas; y++) {
   //         for (let x = 0; x < ampliacao.colunas; x++) {
-  //           canvas.width = larguraParte
-  //           canvas.height = alturaParte
+  //           // Ajuste o canvas para o tamanho final de impressão
+  //           canvas.width = larguraFolha
+  //           canvas.height = alturaFolha
+
+  //           // Recorte e amplie a parte correspondente para preencher a folha
   //           ctx.drawImage(
   //             img,
   //             x * larguraParte,
@@ -67,8 +71,8 @@ export default function PdfEditor() {
   //             alturaParte,
   //             0,
   //             0,
-  //             larguraParte,
-  //             alturaParte
+  //             larguraFolha,
+  //             alturaFolha
   //           )
   //           partes.push(canvas.toDataURL())
   //         }
@@ -78,51 +82,22 @@ export default function PdfEditor() {
   //   })
   // }
 
+  const enviarParaCorteBackend = async () => {
+    try {
+      const response = await axios.post('/cortar-imagem', {
+        imagem: imagemBase64,
+        colunas: ampliacao.colunas,
+        linhas: ampliacao.linhas,
+        orientacao,
+      })
 
-  const recortarImagem = async (base64) => {
-    return new Promise((resolve) => {
-      const img = new window.Image()
-      img.src = base64
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        const partes = []
-        const larguraParte = img.width / ampliacao.colunas
-        const alturaParte = img.height / ampliacao.linhas
-
-        console.log(`Recortando imagem em ${ampliacao.colunas} colunas e ${ampliacao.linhas} linhas`);
-        console.log(`Orientação selecionada: ${orientacao}`);
-
-
-        // Defina o tamanho da folha conforme a orientação
-        const isRetrato = orientacao === 'retrato'
-        const larguraFolha = isRetrato ? 2480 : 3508
-        const alturaFolha = isRetrato ? 3508 : 2480
-
-        for (let y = 0; y < ampliacao.linhas; y++) {
-          for (let x = 0; x < ampliacao.colunas; x++) {
-            // Ajuste o canvas para o tamanho final de impressão
-            canvas.width = larguraFolha
-            canvas.height = alturaFolha
-
-            // Recorte e amplie a parte correspondente para preencher a folha
-            ctx.drawImage(
-              img,
-              x * larguraParte,
-              y * alturaParte,
-              larguraParte,
-              alturaParte,
-              0,
-              0,
-              larguraFolha,
-              alturaFolha
-            )
-            partes.push(canvas.toDataURL())
-          }
-        }
-        resolve(partes)
-      }
-    })
+      const { partes } = response.data
+      return partes
+    } catch (error) {
+      console.error('Erro ao cortar imagem no backend:', error)
+      alert('Erro ao processar a imagem no servidor.')
+      return null
+    }
   }
 
 
@@ -380,10 +355,11 @@ export default function PdfEditor() {
                       if (!imagemBase64) return
                       setCarregando(true)
 
-                      const partes = await recortarImagem(imagemBase64) // recorte
-                      await gerarPDF(partes)
-                      // passa as partes direto
-                      setAlteracoesPendentes(false)
+                      const partes = await enviarParaCorteBackend()
+                      if (partes) {
+                        await gerarPDF(partes)
+                        setAlteracoesPendentes(false)
+                      }
 
                       setCarregando(false)
                     }}
