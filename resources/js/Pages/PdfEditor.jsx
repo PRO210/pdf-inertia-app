@@ -327,7 +327,7 @@ export default function PdfEditor() {
                       setAlteracoesPendentes(true);
                     }}
                   >
-                    {[...Array(12)].map((_, i) => {
+                    {[...Array(10)].map((_, i) => {
                       const valor = i + 1;
                       return (
                         <option key={valor} value={valor}>
@@ -352,7 +352,7 @@ export default function PdfEditor() {
                       setAlteracoesPendentes(true);
                     }}
                   >
-                    {[...Array(12)].map((_, i) => {
+                    {[...Array(10)].map((_, i) => {
                       const valor = i + 1;
                       return (
                         <option key={valor} value={valor}>
@@ -435,7 +435,7 @@ export default function PdfEditor() {
                 </h1>
                 {/* Paginação */}
                 {pdfUrl && totalPaginas > 1 && (
-                  <div className="mt-4 flex justify-center items-center gap-4">
+                  <div className="mt-4 px-4 flex justify-center items-center gap-4">
                     <button
                       onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
                       disabled={paginaAtual === 1}
