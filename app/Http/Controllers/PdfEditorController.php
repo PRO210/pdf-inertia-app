@@ -32,44 +32,57 @@ class PdfEditorController extends Controller
 
         return response()->json(['error' => 'Nenhum arquivo enviado.'], 400);
     }
-
+   
     public function cortarImagem(Request $request)
     {
-        $manager = new ImageManager(new Driver()); // Cria o gerenciador
+        $manager = new ImageManager(new Driver());
 
         $base64 = $request->input('imagem');
-        $colunas = $request->input('colunas', 2);
-        $linhas = $request->input('linhas', 2);
+        $colunas = (int) $request->input('colunas', 2);
+        $linhas = (int) $request->input('linhas', 2);
         $orientacao = $request->input('orientacao', 'retrato');
 
+        // Decodifica e lê a imagem original apenas uma vez
         $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64));
-        $img = $manager->read($imageData);
+        $imgOriginal = $manager->read($imageData);
 
-        $larguraParte = intval($img->width() / $colunas);
-        $alturaParte = intval($img->height() / $linhas);
+       
+        $larguraImagem = $imgOriginal->width();
+        $alturaImagem = $imgOriginal->height();
+
+        $larguraParte = intval($larguraImagem / $colunas);
+        $alturaParte = intval($alturaImagem / $linhas);
+
+        // Dimensões da folha A4 em pixels 300 DPI (retrato ou paisagem)
+        $larguraFolha = $orientacao === 'retrato' ? 2480 : 3508;
+        $alturaFolha = $orientacao === 'retrato' ? 3508 : 2480;
+
+        // Cada parte deve ocupar essa fração da folha
+        $larguraAlvo = intval($larguraFolha / $colunas);
+        $alturaAlvo = intval($alturaFolha / $linhas);
 
         $partes = [];
 
         for ($y = 0; $y < $linhas; $y++) {
             for ($x = 0; $x < $colunas; $x++) {
-                // Cria uma nova instância para cada recorte
-                $recorte = $manager->read($imageData)
-                    ->crop($larguraParte, $alturaParte, $x * $larguraParte, $y * $alturaParte);
+                // Clona a imagem original para evitar reler o base64
+                $recorte = clone $imgOriginal;
+                $recorte->crop($larguraParte, $alturaParte, $x * $larguraParte, $y * $alturaParte);
 
-                $larguraFolha = $orientacao === 'retrato' ? 2480 : 3508;
-                $alturaFolha = $orientacao === 'retrato' ? 3508 : 2480;
-
-                // $recorte->resize($larguraFolha, $alturaFolha);
-
-                $recorte->resize($larguraFolha, null, function ($constraint) {
+                // Redimensiona para caber na fração da folha, mantendo proporção
+                $recorte->resize($larguraAlvo, $alturaAlvo, function ($constraint) {
                     $constraint->aspectRatio();
-                    $constraint->upsize(); // Mantém a proporção
+                    $constraint->upsize();
                 });
 
-                $partes[] = 'data:image/jpeg;base64,' . base64_encode($recorte->toPng());
+                // Cria um canvas branco com o tamanho da fração da folha e centraliza o recorte
+                $canvas = $manager->create($larguraAlvo, $alturaAlvo)->fill('ffffff');
+                $canvas->place($recorte, 'center');
+
+                // Converte para PNG com qualidade máxima
+                $partes[] = 'data:image/png;base64,' . base64_encode($canvas->toPng());
             }
         }
-
 
         return response()->json(['partes' => $partes]);
     }
