@@ -462,7 +462,7 @@ export default function PdfEditor() {
                       <button
                         onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
                         disabled={paginaAtual === totalPaginas}
-                        className={`pro-btn-blue ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                        className={`pro-btn-blue text-nowrap ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
                       >
                         Próxima página
                       </button>
@@ -486,7 +486,7 @@ export default function PdfEditor() {
                       <div
                         key={pdfUrl}
                         ref={pdfContainerRef}
-                        className="w-full max-w-full overflow-auto flex flex-col items-center"
+                        className="w-full  overflow-auto flex flex-col"
                       />
                     ) : imagemBase64 ? (
                       <img
