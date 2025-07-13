@@ -6,6 +6,8 @@ import { Head } from '@inertiajs/react'
 import { router } from '@inertiajs/react'
 
 import * as pdfjsLib from 'pdfjs-dist'
+import Rodape from '@/Components/Footer'
+import Footer from '@/Components/Footer'
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.min.js'
 
 export default function PdfEditor() {
@@ -284,235 +286,250 @@ export default function PdfEditor() {
   return (
     <AuthenticatedLayout>
       <Head title="Editor" />
+
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row gap-2">
+        <div className="flex flex-col md:flex-row items-start gap-4 min-h-screen">
 
-          {/* Opções */}
-          <div className="flex flex-col items-center justify-center gap-4 w-full md:w-2/6" id="opcoes">
-            <div className="w-full text-center md:text-2xl">
-              <h1>Opções</h1>
-            </div>
+          {/* Coluna das Opções */}
+          <div className="w-full md:w-1/3 flex flex-col justify-start items-center" id="opcoes">
+            <div className="flex flex-col items-center justify-center gap-4 w-full" >
+              <div className="w-full text-center text-2xl font-bold mt-4">
+                <h1>Opções</h1>
+              </div>
 
-            <div className="w-full">
-              <label className="block mb-1 pro-label text-center text-xl">Orientação:</label>
-              <select
-                className="px-2 w-full rounded-full pro-input"
-                name="orientacao"
-                id="orientacao"
-                value={orientacao}
-                onChange={(e) => {
-                  setOrientacao(e.target.value)
-                  setAlteracoesPendentes(true)
-                }}
-              >
-                <option value="retrato">Retrato</option>
-                <option value="paisagem">Paisagem</option>
-              </select>
-            </div>
-            <br />
+              <div className="w-full">
+                <label className="block mb-1 pro-label text-center text-xl">Orientação:</label>
+                <select
+                  className="px-2 w-full rounded-full pro-input"
+                  name="orientacao"
+                  id="orientacao"
+                  value={orientacao}
+                  onChange={(e) => {
+                    setOrientacao(e.target.value)
+                    setAlteracoesPendentes(true)
+                  }}
+                >
+                  <option value="retrato">Retrato</option>
+                  <option value="paisagem">Paisagem</option>
+                </select>
+              </div>
+              <br />
 
-            <div className="w-full flex flex-col items-center">
-              <label className="block mb-2 pro-label text-xl text-center">Ampliação:</label>
-              <div className="flex gap-2 items-center">
-                <div>
-                  <label className="block text-sm text-center">Colunas</label>                 
-                  <select
-                    className="px-2 min-w-[150px] rounded-full pro-input"
-                    value={ampliacao.colunas}
-                    onChange={(e) => {
-                      setAmpliacao((prev) => ({
-                        ...prev,
-                        colunas: parseInt(e.target.value) || 1,
-                      }));
-                      setAlteracoesPendentes(true);
-                    }}
-                  >
-                    {[...Array(10)].map((_, i) => {
-                      const valor = i + 1;
-                      return (
-                        <option key={valor} value={valor}>
-                          {valor}
-                        </option>
-                      );
-                    })}
-                  </select>
+              <div className="w-full flex flex-col">
+                <label className="block mb-2 pro-label text-xl text-center">Ampliação:</label>
 
-                </div>
-                <span className="text-xl">×</span>
-                <div>
-                  <label className="block text-sm text-center">Linhas</label>                 
-                  <select
-                    className="px-2 min-w-[150px] rounded-full pro-input"
-                    value={ampliacao.linhas}
-                    onChange={(e) => {
-                      setAmpliacao((prev) => ({
-                        ...prev,
-                        linhas: parseInt(e.target.value) || 1,
-                      }));
-                      setAlteracoesPendentes(true);
-                    }}
-                  >
-                    {[...Array(10)].map((_, i) => {
-                      const valor = i + 1;
-                      return (
-                        <option key={valor} value={valor}>
-                          {valor}
-                        </option>
-                      );
-                    })}
-                  </select>
+                <div className="flex gap-4 w-full">
+                  <div className="flex-1">
+                    <label className="block mb-2 pro-label text-center">Colunas</label>
+                    <select
+                      className="pro-input rounded-full w-full"
+                      value={ampliacao.colunas}
+                      onChange={(e) => {
+                        setAmpliacao((prev) => ({
+                          ...prev,
+                          colunas: parseInt(e.target.value) || 1,
+                        }));
+                        setAlteracoesPendentes(true);
+                      }}
+                    >
+                      {[...Array(10)].map((_, i) => {
+                        const valor = i + 1;
+                        return (
+                          <option key={valor} value={valor}>
+                            {valor}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="flex items-end justify-center px-2">
+                    <span className="text-xl font-bold">×</span>
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block mb-2 pro-label text-center">Linhas</label>
+                    <select
+                      className="pro-input rounded-full w-full"
+                      value={ampliacao.linhas}
+                      onChange={(e) => {
+                        setAmpliacao((prev) => ({
+                          ...prev,
+                          linhas: parseInt(e.target.value) || 1,
+                        }));
+                        setAlteracoesPendentes(true);
+                      }}
+                    >
+                      {[...Array(10)].map((_, i) => {
+                        const valor = i + 1;
+                        return (
+                          <option key={valor} value={valor}>
+                            {valor}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
                 </div>
               </div>
-            </div>
-            <br />
 
-            <div className="flex flex-col gap-2 w-full">
-              {user && (
-                <>
-                  <button
-                    onClick={async () => {
-                      if (!imagemBase64) return
-                      setCarregando(true)
+              <br />
 
-                      const partes = await enviarParaCorteBackend()
-                      if (partes) {
-                        await gerarPDF(partes)
-                        setAlteracoesPendentes(false)
-                      }
-
-                      setCarregando(false)
-                    }}
-                    className={alteracoesPendentes ? "pro-btn-red" : "pro-btn-purple"}
-                  >
-                    {alteracoesPendentes ? "Aplicar alterações" : "Gerar PDF"}
-                  </button>
-
-                  <button onClick={downloadPDF} className="pro-btn-green mt-2" disabled={!pdfUrl}>
-                    Baixar PDF
-                  </button>
-
-                  <div className="flex justify-center gap-2 mt-2">
+              <div className="flex flex-col gap-2 w-full">
+                {user && (
+                  <>
                     <button
-                      onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
-                      disabled={zoom <= 0.25}
-                      className="pro-btn-blue px-3 py-1 rounded"
-                    >
-                      -
-                    </button>
-                    <span className="flex items-center px-2">{(zoom * 100).toFixed(0)}%</span>
-                    <button
-                      onClick={() => setZoom((z) => Math.min(z + 0.1, 3))}
-                      disabled={zoom >= 3}
-                      className="pro-btn-blue px-3 py-1 rounded"
-                    >
-                      +
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+                      onClick={async () => {
+                        if (!imagemBase64) return
+                        setCarregando(true)
 
-            <br />
+                        const partes = await enviarParaCorteBackend()
+                        if (partes) {
+                          await gerarPDF(partes)
+                          setAlteracoesPendentes(false)
+                        }
 
-            <div className='w-full'>
-              <button onClick={resetarConfiguracoes} className="pro-btn-slate">
-                Resetar Configurações
-              </button>
+                        setCarregando(false)
+                      }}
+                      className={alteracoesPendentes ? "pro-btn-red" : "pro-btn-purple"}
+                    >
+                      {alteracoesPendentes ? "Aplicar alterações" : "Gerar PDF"}
+                    </button>
+
+                    <button onClick={downloadPDF} className="pro-btn-green mt-2" disabled={!pdfUrl}>
+                      Baixar PDF
+                    </button>
+
+                    <div className="flex justify-center gap-2 mt-2">
+                      <button
+                        onClick={() => setZoom((z) => Math.max(z - 0.1, 0.25))}
+                        disabled={zoom <= 0.25}
+                        className="pro-btn-blue px-3 py-1 rounded"
+                      >
+                        -
+                      </button>
+                      <span className="flex items-center px-2">{(zoom * 100).toFixed(0)}%</span>
+                      <button
+                        onClick={() => setZoom((z) => Math.min(z + 0.1, 3))}
+                        disabled={zoom >= 3}
+                        className="pro-btn-blue px-3 py-1 rounded"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <br />
+
+              <div className='w-full'>
+                <button onClick={resetarConfiguracoes} className="pro-btn-slate">
+                  Resetar Configurações
+                </button>
+              </div>
             </div>
           </div>
 
+          {/* Coluna do Preview */}
+          <div className="w-full md:w-2/3 flex flex-col justify-start items-center">
+           
+            <div className="flex flex-col items-center justify-center gap-4 w-full " id="preview">
 
-          <div className="flex flex-col items-center justify-center gap-4 w-full " id="opcoes">
-
-            {/* Preview */}
-            <div className="my-2" id="preview">
-              <div className="mx-auto mb-4 p-2 rounded-2xl ">
-                <h1 className="sm:text-xl md:text-2xl text-center font-bold whitespace-nowrap">
-                  Preview do{" "}
-                  <span>
-                    {pdfUrl ? "Banner em PDF" : "da Imagem"}
-                  </span>
-                </h1>
-                {/* Paginação */}
-                {pdfUrl && totalPaginas > 1 && (
-                  <div className="mt-4 px-4 flex justify-center items-center gap-4">
-                    <button
-                      onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
-                      disabled={paginaAtual === 1}
-                      className={`pro-btn-blue ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
-                    >
-                      Página anterior
-                    </button>
-                    <span className="text-lg whitespace-nowrap">
-                      {paginaAtual} / {totalPaginas}
+              {/* Preview */}
+              <div className="my-2" id="preview">
+                <div className="mx-auto mb-4 p-2 rounded-2xl ">
+                  <h1 className="sm:text-xl md:text-2xl text-center font-bold whitespace-nowrap">
+                    Preview do{" "}
+                    <span>
+                      {pdfUrl ? "Banner em PDF" : "da Imagem"}
                     </span>
-                    <button
-                      onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
-                      disabled={paginaAtual === totalPaginas}
-                      className={`pro-btn-blue ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
-                    >
-                      Próxima página
-                    </button>
-                  </div>
-                )}
-              </div>
+                  </h1>
+                  {/* Paginação */}
+                  {pdfUrl && totalPaginas > 1 && (
+                    <div className="mt-4 px-4 flex justify-center items-center gap-4">
+                      <button
+                        onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
+                        disabled={paginaAtual === 1}
+                        className={`pro-btn-blue ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                      >
+                        Página anterior
+                      </button>
+                      <span className="text-lg whitespace-nowrap">
+                        {paginaAtual} / {totalPaginas}
+                      </span>
+                      <button
+                        onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
+                        disabled={paginaAtual === totalPaginas}
+                        className={`pro-btn-blue ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                      >
+                        Próxima página
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-              <div
-                id="pdf-preview"
-                className="w-full border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100 relative"
-                style={{ minHeight: '600px' }}
-              >
-                {carregando && (
-                  <div className="absolute inset-0 bg-white bg-opacity-80 flex justify-center items-center z-50">
-                    <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
+                <div
+                  id="pdf-preview"
+                  className="w-full border-2 border-gray-300 rounded-lg mx-auto overflow-x-auto flex justify-center items-center p-4 bg-gray-100 relative"
+                  style={{ minHeight: '600px' }}
+                >
+                  {carregando && (
+                    <div className="absolute inset-0 bg-white bg-opacity-80 flex justify-center items-center z-50">
+                      <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
 
-                {!carregando && (
-                  pdfUrl ? (
-                    <div
-                      key={pdfUrl}
-                      ref={pdfContainerRef}
-                      className="w-full max-w-full overflow-auto flex flex-col items-center"
-                    />
-                  ) : imagemBase64 ? (
-                    <img
-                      src={imagemBase64}
-                      alt="Pré-visualização da imagem carregada"
-                      className="max-h-[500px] object-contain rounded-md shadow-md"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center min-h-[400px]">
-                      <div>
-                        <label className="pro-label text-center text-xl">Nenhuma Imagem Selecionada:</label>
-                        <input
-                          type="file"
-                          accept="image/png, image/jpeg"
-                          onChange={handleFileChange}
-                          className="pro-btn-blue
+                  {!carregando && (
+                    pdfUrl ? (
+                      <div
+                        key={pdfUrl}
+                        ref={pdfContainerRef}
+                        className="w-full max-w-full overflow-auto flex flex-col items-center"
+                      />
+                    ) : imagemBase64 ? (
+                      <img
+                        src={imagemBase64}
+                        alt="Pré-visualização da imagem carregada"
+                        className="max-h-[500px] object-contain rounded-md shadow-md"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center min-h-[400px]">
+                        <div>
+                          <label className="pro-label text-center text-xl">Nenhuma Imagem Selecionada:</label>
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg"
+                            onChange={handleFileChange}
+                            className="pro-btn-blue
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
                         file:bg-blue-50 file:text-blue-700
                         hover:file:bg-blue-100 cursor-pointer"
-                        />
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )
-                )}
+                    )
+                  )}
 
-                {erroPdf && !carregando && (
-                  <div className="text-red-600 mt-2 text-center">{erroPdf}</div>
-                )}
+                  {erroPdf && !carregando && (
+                    <div className="text-red-600 mt-2 text-center">{erroPdf}</div>
+                  )}
+                </div>
+
+
               </div>
-
-
             </div>
           </div>
 
-
         </div>
       </div>
+
+      <Footer ano={2025}/>
+
+
     </AuthenticatedLayout>
   )
 }
