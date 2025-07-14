@@ -379,27 +379,32 @@ export default function PdfEditor() {
               <div className="flex flex-col gap-2 w-full">
                 {user && (
                   <>
-                    <button
-                      onClick={async () => {
-                        if (!imagemBase64) return
-                        setCarregando(true)
+                    {imagemBase64 && alteracoesPendentes && (
+                      <button
+                        onClick={async () => {
+                          // A verificação interna `if (!imagemBase64) return` ainda é boa prática
+                          // para garantir, caso o estado mude entre a renderização e o clique.
+                          setCarregando(true);
 
-                        const partes = await enviarParaCorteBackend()
-                        if (partes) {
-                          await gerarPDF(partes)
-                          setAlteracoesPendentes(false)
-                        }
+                          const partes = await enviarParaCorteBackend();
+                          if (partes) {
+                            await gerarPDF(partes);
+                            setAlteracoesPendentes(false);
+                          }
 
-                        setCarregando(false)
-                      }}
-                      className={alteracoesPendentes ? "pro-btn-red" : "pro-btn-purple"}
-                    >
-                      {alteracoesPendentes ? "Aplicar alterações" : "Gerar PDF"}
-                    </button>
+                          setCarregando(false);
+                        }}
+                        className={alteracoesPendentes ? "pro-btn-red" : "pro-btn-purple"}
+                      >
+                       Aplicar alterações
+                      </button>
+                    )}
 
-                    <button onClick={downloadPDF} className="pro-btn-green mt-2" disabled={!pdfUrl}>
-                      Baixar PDF
-                    </button>
+                    {pdfUrl && (
+                      <button onClick={downloadPDF} className="pro-btn-green mt-2" disabled={!pdfUrl}>
+                        Baixar PDF
+                      </button>
+                    )}
 
                     <div className="flex justify-center gap-2 mt-2">
                       <button
@@ -434,7 +439,7 @@ export default function PdfEditor() {
 
           {/* Coluna do Preview */}
           <div className="w-full md:w-2/3 flex flex-col justify-start items-center">
-           
+
             <div className="flex flex-col items-center justify-center gap-4 w-full " id="preview">
 
               {/* Preview */}
@@ -452,7 +457,7 @@ export default function PdfEditor() {
                       <button
                         onClick={() => setPaginaAtual((p) => Math.max(p - 1, 1))}
                         disabled={paginaAtual === 1}
-                        className={`pro-btn-blue ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                        className={`pro-btn-blue md:text-nowrap ${paginaAtual === 1 ? 'bg-gray-400 cursor-not-allowed' : ''}`}
                       >
                         Página anterior
                       </button>
@@ -462,7 +467,7 @@ export default function PdfEditor() {
                       <button
                         onClick={() => setPaginaAtual((p) => Math.min(p + 1, totalPaginas))}
                         disabled={paginaAtual === totalPaginas}
-                        className={`pro-btn-blue text-nowrap ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                        className={`pro-btn-blue md:text-nowrap ${paginaAtual === totalPaginas ? 'bg-gray-400 cursor-not-allowed' : ''}`}
                       >
                         Próxima página
                       </button>
@@ -527,7 +532,7 @@ export default function PdfEditor() {
         </div>
       </div>
 
-      <Footer ano={2025}/>
+      <Footer ano={2025} />
 
 
     </AuthenticatedLayout>
